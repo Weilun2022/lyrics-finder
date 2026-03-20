@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>歌詞搜尋器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3f;
+    --accent: #7c6af7;
+    --accent2: #f76a8a;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --glow: rgba(124, 106, 247, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,106,247,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 90%, rgba(247,106,138,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .subtitle {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Mic Section */
+  .mic-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .mic-wrapper {
+    position: relative;
+  }
+
+  .mic-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--card);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mic-btn:hover {
+    border-color: var(--accent2);
+    background: rgba(124,106,247,0.15);
+    transform: scale(1.05);
+  }
+
+  .mic-btn.recording {
+    border-color: var(--accent2);
+    background: rgba(247,106,138,0.12);
+    animation: pulse-ring 1.5s ease-out infinite;
+  }
+
+  .mic-btn svg {
+    width: 32px;
+    height: 32px;
+    transition: transform 0.2s;
+  }
+
+  .mic-btn.recording svg {
+    transform: scale(1.1);
+  }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(247,106,138,0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(247,106,138,0); }
+    100% { box-shadow: 0 0 0 0 rgba(247,106,138,0); }
+  }
+
+  /* Sound wave */
+  .wave-bars {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 28px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .wave-bars.active { opacity: 1; }
+
+  .bar {
+    width: 4px;
+    background: var(--accent2);
+    border-radius: 2px;
+    animation: wave 0.8s ease-in-out infinite;
+    min-height: 4px;
+  }
+  .bar:nth-child(1) { animation-delay: 0s; }
+  .bar:nth-child(2) { animation-delay: 0.1s; }
+  .bar:nth-child(3) { animation-delay: 0.2s; }
+  .bar:nth-child(4) { animation-delay: 0.3s; }
+  .bar:nth-child(5) { animation-delay: 0.2s; }
+  .bar:nth-child(6) { animation-delay: 0.1s; }
+  .bar:nth-child(7) { animation-delay: 0s; }
+
+  @keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 24px; }
+  }
+
+  .status-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* Manual Input */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .search-box {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .search-btn {
+    padding: 14px 24px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover {
+    background: #9080ff;
+    transform: translateY(-1px);
+  }
+
+  /* Result Card */
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    display: none;
+    animation: slideUp 0.4s ease;
+  }
+
+  .result-card.visible { display: block; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .song-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .song-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .song-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .song-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .lyrics-body {
+    line-height: 2;
+    font-size: 16px;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-weight: 300;
+  }
+
+  .lyrics-body strong {
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 48px;
+    display: none;
+  }
+
+  .loading.visible { display: block; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading p {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Error */
+  .error-msg {
+    background: rgba(247,106,138,0.08);
+    border: 1px solid rgba(247,106,138,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    display: none;
+    margin-bottom: 16px;
+  }
+  .error-msg.visible { display: block; }
+
+  /* Transcript box */
+  .transcript-box {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 52px;
+    display: none;
+    margin-bottom: 20px;
+  }
+  .transcript-box.visible { display: block; }
+  .transcript-box span { color: var(--accent); }
+
+  @media (max-width: 480px) {
+    .song-header { flex-direction: column; }
+    .search-box { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">🎵 Lyrics Finder</div>
+    <h1>歌詞<span>搜尋器</span></h1>
+    <p class="subtitle">唱幾句 · 找歌詞 · 搭配 AI 辨識</p>
+  </header>
+
+  <!-- Mic -->
+  <div class="mic-section">
+    <div class="mic-wrapper">
+      <button class="mic-btn" id="micBtn" title="按住說話">
+        <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="wave-bars" id="waveBars">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+
+    <p class="status-text" id="statusText">點擊麥克風開始說唱</p>
+  </div>
+
+  <div class="transcript-box" id="transcriptBox">
+    識別結果：<span id="transcriptText"></span>
+  </div>
+
+  <!-- Manual Search -->
+  <div class="divider"><span>或手動輸入</span></div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="輸入歌名、歌詞片段、或歌手名稱..." />
+    <button class="search-btn" id="searchBtn">搜尋</button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>AI 正在搜尋歌詞...</p>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="song-header">
+      <div>
+        <div class="song-title" id="songTitle"></div>
+        <div class="song-meta" id="songMeta"></div>
+      </div>
+      <div class="song-tag" id="songTag">LYRICS</div>
+    </div>
+    <div class="lyrics-body" id="lyricsBody"></div>
+  </div>
+</div>
+
+<script>
+const micBtn = document.getElementById('micBtn');
+const waveBars = document.getElementById('waveBars');
+const statusText = document.getElementById('statusText');
+const transcriptBox = document.getElementById('transcriptBox');
+const transcriptText = document.getElementById('transcriptText');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const loading = document.getElementById('loading');
+const errorMsg = document.getElementById('errorMsg');
+const resultCard = document.getElementById('resultCard');
+const songTitle = document.getElementById('songTitle');
+const songMeta = document.getElementById('songMeta');
+const lyricsBody = document.getElementById('lyricsBody');
+const songTag = document.getElementById('songTag');
+
+let recognition = null;
+let isRecording = false;
+
+// Speech Recognition setup
+function setupRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+
+  const rec = new SpeechRecognition();
+  rec.lang = 'zh-TW';
+  rec.continuous = false;
+  rec.interimResults = true;
+
+  rec.onstart = () => {
+    isRecording = true;
+    micBtn.classList.add('recording');
+    waveBars.classList.add('active');
+    statusText.textContent = '🎙 正在聆聽，請唱或說出歌詞片段...';
+  };
+
+  rec.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    const display = final || interim;
+    transcriptText.textContent = display;
+    transcriptBox.classList.add('visible');
+    if (final) searchInput.value = final;
+  };
+
+  rec.onend = () => {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    waveBars.classList.remove('active');
+    statusText.textContent = '點擊麥克風開始說唱';
+
+    const q = searchInput.value.trim();
+    if (q) {
+      setTimeout(() => searchLyrics(q), 300);
+    }
+  };
+
+  rec.onerror = (e) => {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+    waveBars.classList.remove('active');
+    const msgs = {
+      'no-speech': '沒有偵測到聲音，請再試一次',
+      'not-allowed': '麥克風權限被拒絕，請在瀏覽器設定中允許',
+      'network': '網路錯誤，請檢查連線',
+    };
+    statusText.textContent = msgs[e.error] || '發生錯誤，請重試';
+    showError(msgs[e.error] || `語音辨識錯誤：${e.error}`);
+  };
+
+  return rec;
+}
+
+micBtn.addEventListener('click', () => {
+  if (isRecording) {
+    recognition?.stop();
+    return;
+  }
+  hideError();
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showError('您的瀏覽器不支援語音辨識，請使用 Chrome 或 Edge');
+    return;
+  }
+  recognition = setupRecognition();
+  try {
+    recognition.start();
+  } catch(e) {
+    showError('無法啟動麥克風，請確認瀏覽器已允許存取');
+  }
+});
+
+searchBtn.addEventListener('click', () => {
+  const q = searchInput.value.trim();
+  if (q) searchLyrics(q);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const q = searchInput.value.trim();
+    if (q) searchLyrics(q);
+  }
+});
+
+async function searchLyrics(query) {
+  hideError();
+  resultCard.classList.remove('visible');
+  loading.classList.add('visible');
+
+  const prompt = `你是一個歌詞查詢助手。用戶提供了以下文字，可能是歌名、歌手名、或歌詞片段：
+
+「${query}」
+
+請根據這段文字，找出最符合的歌曲，並提供以下資訊（以 JSON 格式回覆）：
+{
+  "title": "歌曲名稱",
+  "artist": "歌手名稱",
+  "language": "語言（中文/英文/日文等）",
+  "year": "發行年份（若知道）",
+  "lyrics": "完整或重要段落的歌詞（保留換行格式，用\\n分隔）",
+  "note": "備註（例如：這是哪個版本，或特別說明）"
+}
+
+如果找不到確切歌曲，請根據歌詞片段推測最可能的歌曲並提供。
+只回覆 JSON，不要加任何多餘文字。`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.map(i => i.text || '').join('') || '';
+
+    let info;
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      info = JSON.parse(clean);
+    } catch {
+      throw new Error('無法解析 AI 回傳資料');
+    }
+
+    loading.classList.remove('visible');
+    displayResult(info);
+
+  } catch (err) {
+    loading.classList.remove('visible');
+    showError('搜尋失敗：' + (err.message || '請稍後再試'));
+  }
+}
+
+function displayResult(info) {
+  songTitle.textContent = info.title || '未知歌曲';
+  songMeta.textContent = [
+    info.artist && `🎤 ${info.artist}`,
+    info.year && `📅 ${info.year}`,
+    info.language && `🌐 ${info.language}`,
+  ].filter(Boolean).join('   ·   ');
+
+  songTag.textContent = info.language || 'LYRICS';
+
+  const rawLyrics = info.lyrics || '（找不到歌詞）';
+  lyricsBody.innerHTML = rawLyrics
+    .split('\n')
+    .map(line => line.trim() ? `<p>${escapeHtml(line)}</p>` : '<p style="height:0.8em"></p>')
+    .join('');
+
+  resultCard.classList.add('visible');
+  resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('visible');
+}
+
+function hideError() {
+  errorMsg.classList.remove('visible');
+}
+</script>
+</body>
+</html>
