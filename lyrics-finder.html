@@ -340,6 +340,89 @@
     font-weight: 700;
   }
 
+  /* 推薦歌曲 */
+  .recommend-section {
+    display: none;
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .recommend-section.visible { display: block; }
+
+  .recommend-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+  }
+
+  .recommend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .recommend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .recommend-item:hover {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.08);
+    transform: translateY(-2px);
+  }
+
+  .recommend-cover {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--border);
+  }
+
+  .recommend-cover-placeholder {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .recommend-info { min-width: 0; }
+
+  .recommend-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recommend-artist {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   /* Loading */
   .loading {
     text-align: center;
@@ -625,6 +708,12 @@
       <div class="song-tag" id="songTag">LYRICS</div>
     </div>
     <div class="lyrics-body" id="lyricsBody"></div>
+
+    <!-- 推薦歌曲 -->
+    <div class="recommend-section" id="recommendSection">
+      <div class="recommend-label">▸ 相似歌曲推薦</div>
+      <div class="recommend-grid" id="recommendGrid"></div>
+    </div>
   </div>
 </div>
 
@@ -802,11 +891,15 @@ searchInput.addEventListener('keydown', (e) => {
 
 const GENIUS_TOKEN = 'K-K44OiHSCZXCHPVbiS4bBg0k4AChJdv6VHBXfjcD8_LxwLcpfPSQlPNNDsNHVtn';
 const WORKER_URL = 'https://lyrics-proxy.evilscheme2012.workers.dev';
+const recommendSection = document.getElementById('recommendSection');
+const recommendGrid    = document.getElementById('recommendGrid');
 
 async function searchLyrics(query) {
   hideError();
   resultCard.classList.remove('visible');
   hideCandidates();
+  recommendSection.classList.remove('visible');
+  recommendGrid.innerHTML = '';
   loading.classList.add('visible');
 
   // 同時向四個來源拿候選清單（網易雲優先處理中文歌）
@@ -1014,6 +1107,11 @@ async function loadAndDisplay(candidate) {
     year: candidate._raw?.release_date_components?.year || candidate._raw?.album?.release_date?.slice(0, 4) || '',
     lyrics: toTraditional(lyrics)
   });
+
+  // 若來自網易雲，非同步載入相似歌曲推薦
+  if (candidate.source === 'netease' && candidate._raw?.id) {
+    fetchAndShowRecommendations(candidate._raw.id);
+  }
 }
 
 // ── 用歌名+歌手搜尋 Genius 並抓歌詞 ──
@@ -1115,6 +1213,58 @@ function displayResult(info) {
 
   resultCard.classList.add('visible');
   resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── 相似歌曲推薦（網易雲）──
+async function fetchAndShowRecommendations(neId) {
+  recommendSection.classList.remove('visible');
+  recommendGrid.innerHTML = '';
+  try {
+    const res = await fetch(`${WORKER_URL}?netease_similar=${neId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const songs = data.songs || [];
+    if (songs.length === 0) return;
+
+    recommendGrid.innerHTML = '';
+    songs.forEach(song => {
+      const item = document.createElement('div');
+      item.className = 'recommend-item';
+      item.title = `${song.title} — ${song.artist}`;
+
+      const coverHtml = song.coverUrl
+        ? `<img class="recommend-cover" src="${escapeHtml(song.coverUrl)}" alt="cover" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
+          + `<div class="recommend-cover-placeholder" style="display:none">🎵</div>`
+        : `<div class="recommend-cover-placeholder">🎵</div>`;
+
+      item.innerHTML = `
+        ${coverHtml}
+        <div class="recommend-info">
+          <div class="recommend-title">${escapeHtml(song.title)}</div>
+          <div class="recommend-artist">${escapeHtml(song.artist)}</div>
+        </div>`;
+
+      item.addEventListener('click', async () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        hideCandidates();
+        hideError();
+        await loadAndDisplay({
+          source: 'netease',
+          title: song.title,
+          artist: song.artist,
+          album: song.album,
+          coverUrl: song.coverUrl,
+          _raw: { id: song.id }
+        });
+      });
+
+      recommendGrid.appendChild(item);
+    });
+
+    recommendSection.classList.add('visible');
+  } catch (e) {
+    // 靜默失敗，不影響主歌詞顯示
+  }
 }
 
 function escapeHtml(s) {
