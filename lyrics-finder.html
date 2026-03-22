@@ -181,6 +181,33 @@
     min-height: 18px;
   }
 
+  /* Language selector */
+  .lang-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .lang-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .lang-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
   /* Manual Input */
   .divider {
     display: flex;
@@ -373,9 +400,156 @@
   .transcript-box.visible { display: block; }
   .transcript-box span { color: var(--accent); }
 
+  /* Candidate List */
+  .candidate-list {
+    display: none;
+    margin-bottom: 24px;
+    animation: slideUp 0.3s ease;
+  }
+  .candidate-list.visible { display: block; }
+
+  .candidate-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+
+  .candidate-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 12px;
+  }
+  .candidate-item:hover {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.08);
+    transform: translateX(4px);
+  }
+
+  .candidate-info { flex: 1; min-width: 0; }
+
+  .candidate-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .candidate-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .candidate-arrow {
+    color: var(--accent);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* 來源標籤 */
+  .source-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+  }
+  .source-tag.netease  { color: #e84d4d; border-color: #e84d4d; }
+  .source-tag.genius   { color: #f5c518; border-color: #f5c518; }
+  .source-tag.lrclib   { color: #4db8e8; border-color: #4db8e8; }
+  .source-tag.lyricsovh { color: #7ec87e; border-color: #7ec87e; }
+
+  /* 浮動搜尋按鈕 */
+  .fab-wrap {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .fab-search-box {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: slideUp 0.2s ease;
+    width: 280px;
+  }
+  .fab-search-box.open { display: flex; gap: 8px; }
+
+  .fab-search-box input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .fab-search-box input:focus { border-color: var(--accent); }
+
+  .fab-search-go {
+    padding: 10px 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .fab-search-go:hover { background: #9080ff; }
+
+  .fab-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(124,106,247,0.5);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fab-btn:hover { transform: scale(1.1); background: #9080ff; }
+  .fab-btn.active { background: var(--accent2); box-shadow: 0 4px 16px rgba(247,106,138,0.5); }
+
   @media (max-width: 480px) {
     .song-header { flex-direction: column; }
     .search-box { flex-direction: column; }
+    .fab-wrap { bottom: 20px; right: 16px; }
+    .fab-search-box { width: 230px; }
   }
 </style>
 </head>
@@ -407,6 +581,14 @@
     </div>
 
     <p class="status-text" id="statusText">點擊麥克風開始說唱</p>
+
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="zh-TW">繁中</button>
+      <button class="lang-btn" data-lang="zh-CN">普通話</button>
+      <button class="lang-btn" data-lang="en-US">English</button>
+      <button class="lang-btn" data-lang="ja-JP">日本語</button>
+      <button class="lang-btn" data-lang="ko-KR">한국어</button>
+    </div>
   </div>
 
   <div class="transcript-box" id="transcriptBox">
@@ -422,6 +604,13 @@
   </div>
 
   <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Candidate list -->
+  <div class="candidate-list" id="candidateList">
+    <div class="candidate-label">找到多首符合歌曲，請選擇：</div>
+    <div id="candidateItems"></div>
+  </div>
+
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <p>AI 正在搜尋歌詞...</p>
@@ -439,6 +628,15 @@
   </div>
 </div>
 
+<!-- 浮動搜尋按鈕 -->
+<div class="fab-wrap">
+  <div class="fab-search-box" id="fabSearchBox">
+    <input type="text" id="fabInput" placeholder="搜尋新歌曲..." />
+    <button class="fab-search-go" id="fabGo">↑</button>
+  </div>
+  <button class="fab-btn" id="fabBtn" title="搜尋新歌曲">🔍</button>
+</div>
+
 <script>
 const micBtn = document.getElementById('micBtn');
 const waveBars = document.getElementById('waveBars');
@@ -454,9 +652,54 @@ const songTitle = document.getElementById('songTitle');
 const songMeta = document.getElementById('songMeta');
 const lyricsBody = document.getElementById('lyricsBody');
 const songTag = document.getElementById('songTag');
+const candidateList = document.getElementById('candidateList');
+const candidateItems = document.getElementById('candidateItems');
+const fabBtn = document.getElementById('fabBtn');
+const fabSearchBox = document.getElementById('fabSearchBox');
+const fabInput = document.getElementById('fabInput');
+const fabGo = document.getElementById('fabGo');
+
+// 浮動按鈕邏輯
+fabBtn.addEventListener('click', () => {
+  const isOpen = fabSearchBox.classList.toggle('open');
+  fabBtn.classList.toggle('active', isOpen);
+  if (isOpen) { fabInput.focus(); }
+});
+
+function fabSearch() {
+  const q = fabInput.value.trim();
+  if (!q) return;
+  fabSearchBox.classList.remove('open');
+  fabBtn.classList.remove('active');
+  fabInput.value = '';
+  searchInput.value = q;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => searchLyrics(q), 400);
+}
+
+fabGo.addEventListener('click', fabSearch);
+fabInput.addEventListener('keydown', e => { if (e.key === 'Enter') fabSearch(); });
+
+// 點頁面其他地方關閉浮動搜尋
+document.addEventListener('click', e => {
+  if (!fabBtn.contains(e.target) && !fabSearchBox.contains(e.target)) {
+    fabSearchBox.classList.remove('open');
+    fabBtn.classList.remove('active');
+  }
+});
 
 let recognition = null;
 let isRecording = false;
+let selectedLang = 'zh-TW';
+
+// 語言切換
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedLang = btn.dataset.lang;
+  });
+});
 
 // Speech Recognition setup
 function setupRecognition() {
@@ -464,9 +707,10 @@ function setupRecognition() {
   if (!SpeechRecognition) return null;
 
   const rec = new SpeechRecognition();
-  rec.lang = 'zh-TW';
+  rec.lang = selectedLang;   // 使用選擇的語言
   rec.continuous = false;
   rec.interimResults = true;
+  rec.maxAlternatives = 3;   // 取多個候選結果，提升準確率
 
   rec.onstart = () => {
     isRecording = true;
@@ -478,9 +722,18 @@ function setupRecognition() {
   rec.onresult = (e) => {
     let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) final += t;
-      else interim += t;
+      const result = e.results[i];
+      // 取信心度最高的候選
+      let bestText = result[0].transcript;
+      let bestConf = result[0].confidence || 0;
+      for (let j = 1; j < result.length; j++) {
+        if ((result[j].confidence || 0) > bestConf) {
+          bestConf = result[j].confidence;
+          bestText = result[j].transcript;
+        }
+      }
+      if (result.isFinal) final += bestText;
+      else interim += bestText;
     }
     const display = final || interim;
     transcriptText.textContent = display;
@@ -547,66 +800,310 @@ searchInput.addEventListener('keydown', (e) => {
   }
 });
 
+const GENIUS_TOKEN = 'K-K44OiHSCZXCHPVbiS4bBg0k4AChJdv6VHBXfjcD8_LxwLcpfPSQlPNNDsNHVtn';
+const WORKER_URL = 'https://lyrics-proxy.evilscheme2012.workers.dev';
+
 async function searchLyrics(query) {
   hideError();
   resultCard.classList.remove('visible');
+  hideCandidates();
   loading.classList.add('visible');
 
-  const prompt = `你是一個歌詞查詢助手。用戶提供了以下文字，可能是歌名、歌手名、或歌詞片段：
+  // 同時向四個來源拿候選清單（網易雲優先處理中文歌）
+  const [neteaseCandidates, geniusCandidates, lrclibCandidates, ovhCandidates] = await Promise.all([
+    fetchNetEaseCandidates(query),
+    fetchGeniusCandidates(query),
+    fetchLrclibCandidates(query),
+    fetchOvhCandidates(query)
+  ]);
 
-「${query}」
+  loading.classList.remove('visible');
 
-請根據這段文字，找出最符合的歌曲，並提供以下資訊（以 JSON 格式回覆）：
-{
-  "title": "歌曲名稱",
-  "artist": "歌手名稱",
-  "language": "語言（中文/英文/日文等）",
-  "year": "發行年份（若知道）",
-  "lyrics": "完整或重要段落的歌詞（保留換行格式，用\\n分隔）",
-  "note": "備註（例如：這是哪個版本，或特別說明）"
+  // 合併去重（以 title+artist 為 key）
+  const seen = new Set();
+  const all = [...neteaseCandidates, ...geniusCandidates, ...lrclibCandidates, ...ovhCandidates].filter(c => {
+    const key = `${c.title}||${c.artist}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (all.length === 0) {
+    showError('找不到符合的歌曲，建議輸入歌名、歌手名或歌詞片段');
+    return;
+  }
+
+  if (all.length === 1) {
+    await loadAndDisplay(all[0]);
+    return;
+  }
+
+  showCandidates(all.slice(0, 12));
 }
 
-如果找不到確切歌曲，請根據歌詞片段推測最可能的歌曲並提供。
-只回覆 JSON，不要加任何多餘文字。`;
-
+// ── API 0：網易雲音樂（大陸中文歌最佳來源）──
+async function fetchNetEaseCandidates(query) {
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
+    // 搜尋網易雲時自動轉簡體，避免繁體字找不到大陸歌
+    const simplifiedQuery = toSimplified(query);
+    const res = await fetch(`${WORKER_URL}?netease_search=${encodeURIComponent(simplifiedQuery)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.songs || []).map(s => ({
+      title: s.title || '未知歌曲',
+      artist: s.artist || '未知歌手',
+      album: s.album || '',
+      coverUrl: '',
+      source: 'netease',
+      _raw: { id: s.id }
+    }));
+  } catch { return []; }
+}
+
+// ── API 1：Genius（透過 Worker 全文搜尋，含歌詞內容）──
+async function fetchGeniusCandidates(query) {
+  try {
+    const res = await fetch(`${WORKER_URL}?search=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.songs || []).map(s => ({
+      title: s.title || '未知歌曲',
+      artist: s.artist || '未知歌手',
+      album: '',
+      coverUrl: s.coverUrl || '',
+      source: 'genius',
+      _raw: { url: s.url }
+    }));
+  } catch { return []; }
+}
+
+// ── API 2：lrclib.net（中英日通用）──
+async function fetchLrclibCandidates(query) {
+  try {
+    const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter(s => {
+        if (!s.plainLyrics && !s.syncedLyrics) return false;
+        const title = s.trackName || '';
+        // 過濾標題太長或含中文標點的（通常是歌詞片段被誤植為歌名）
+        if (title.length > 30) return false;
+        if (title.includes('，') || title.includes('。') || title.includes('、')) return false;
+        return true;
       })
+      .slice(0, 5)
+      .map(s => ({
+        title: s.trackName || '未知歌曲',
+        artist: s.artistName || '未知歌手',
+        album: s.albumName || '',
+        coverUrl: '',
+        source: 'lrclib',
+        _raw: s
+      }));
+  } catch { return []; }
+}
+
+// ── API 3：lyrics.ovh（英文備援）──
+async function fetchOvhCandidates(query) {
+  try {
+    const res = await fetch(`https://api.lyrics.ovh/suggest/${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.data) return [];
+    return data.data.slice(0, 4).map(s => ({
+      title: s.title || '未知歌曲',
+      artist: s.artist?.name || '未知歌手',
+      album: s.album?.title || '',
+      coverUrl: '',
+      source: 'lyrics.ovh',
+      _raw: s
+    }));
+  } catch { return []; }
+}
+
+const SOURCE_LABEL = {
+  'netease':   { text: '網易雲', cls: 'netease' },
+  'genius':    { text: 'Genius', cls: 'genius' },
+  'lrclib':    { text: 'LRCLib', cls: 'lrclib' },
+  'lyrics.ovh':{ text: 'OVH',    cls: 'lyricsovh' },
+};
+
+// ── 顯示候選清單 ──
+function showCandidates(candidates) {
+  candidateItems.innerHTML = '';
+  candidates.forEach(c => {
+    const label = SOURCE_LABEL[c.source] || { text: c.source, cls: 'lrclib' };
+    const item = document.createElement('div');
+    item.className = 'candidate-item';
+    item.innerHTML = `
+      <div class="candidate-info">
+        <div class="candidate-title">${escapeHtml(c.title)}</div>
+        <div class="candidate-sub">${escapeHtml(c.artist)}${c.album ? '　·　' + escapeHtml(c.album) : ''}</div>
+      </div>
+      <span class="source-tag ${label.cls}">${label.text}</span>
+      <div class="candidate-arrow">›</div>
+    `;
+    item.addEventListener('click', async () => {
+      hideCandidates();
+      loading.classList.add('visible');
+      await loadAndDisplay(c);
+      loading.classList.remove('visible');
     });
+    candidateItems.appendChild(item);
+  });
+  candidateList.classList.add('visible');
+}
 
-    const data = await response.json();
-    const text = data.content?.map(i => i.text || '').join('') || '';
+function hideCandidates() {
+  candidateList.classList.remove('visible');
+  candidateItems.innerHTML = '';
+}
 
-    let info;
-    try {
-      const clean = text.replace(/```json|```/g, '').trim();
-      info = JSON.parse(clean);
-    } catch {
-      throw new Error('無法解析 AI 回傳資料');
+// 判斷歌詞是否足夠完整（至少 5 行非空白）
+function isLyricsComplete(text) {
+  if (!text) return false;
+  const lines = text.split('\n').filter(l => l.trim().length > 0);
+  return lines.length >= 5;
+}
+
+// ── 載入歌詞並顯示 ──
+async function loadAndDisplay(candidate) {
+  loading.classList.add('visible');
+  let lyrics = '';
+
+  if (candidate.source === 'netease') {
+    if (candidate._raw?.id) {
+      try {
+        const res = await fetch(`${WORKER_URL}?netease_id=${candidate._raw.id}`);
+        const data = await res.json();
+        lyrics = data.lyrics || '';
+      } catch {}
     }
-
-    loading.classList.remove('visible');
-    displayResult(info);
-
-  } catch (err) {
-    loading.classList.remove('visible');
-    showError('搜尋失敗：' + (err.message || '請稍後再試'));
+    // 網易雲歌詞不完整，用歌名+歌手去 Genius 搜尋
+    if (!isLyricsComplete(lyrics)) lyrics = await fetchLyricsFromGeniusSearch(candidate.title, candidate.artist);
+    if (!isLyricsComplete(lyrics)) lyrics = await fetchLyricsFromLrclib(candidate.title, candidate.artist);
+  } else if (candidate.source === 'lrclib') {
+    const s = candidate._raw;
+    lyrics = s.plainLyrics || s.syncedLyrics?.replace(/\[\d+:\d+\.\d+\]/g, '').trim() || '';
+  } else if (candidate.source === 'genius') {
+    if (candidate._raw?.url) {
+      lyrics = await fetchLyricsFromWorker(candidate._raw.url);
+    }
+    if (!isLyricsComplete(lyrics)) lyrics = await fetchLyricsFromLrclib(candidate.title, candidate.artist);
+    if (!isLyricsComplete(lyrics)) lyrics = await fetchLyricsFromOvh(candidate.title, candidate.artist);
+  } else {
+    lyrics = await fetchLyricsFromOvh(candidate.title, candidate.artist);
+    if (!isLyricsComplete(lyrics)) lyrics = await fetchLyricsFromLrclib(candidate.title, candidate.artist);
   }
+
+  loading.classList.remove('visible');
+
+  if (!isLyricsComplete(lyrics)) {
+    showError(`找不到「${candidate.title}」的完整歌詞，請試試其他來源的同名歌曲`);
+    return;
+  }
+
+  displayResult({
+    title: candidate.title,
+    artist: candidate.artist,
+    album: candidate.album,
+    coverUrl: candidate.coverUrl || '',
+    language: detectLanguage(lyrics),
+    year: candidate._raw?.release_date_components?.year || candidate._raw?.album?.release_date?.slice(0, 4) || '',
+    lyrics: toTraditional(lyrics)
+  });
+}
+
+// ── 用歌名+歌手搜尋 Genius 並抓歌詞 ──
+async function fetchLyricsFromGeniusSearch(title, artist) {
+  try {
+    const res = await fetch(`${WORKER_URL}?search=${encodeURIComponent(title + ' ' + artist)}`);
+    if (!res.ok) return '';
+    const data = await res.json();
+    const songs = data.songs || [];
+    if (songs.length === 0) return '';
+    // 取第一筆有 url 的結果去抓歌詞
+    const song = songs.find(s => s.url) || songs[0];
+    if (!song?.url) return '';
+    return await fetchLyricsFromWorker(song.url);
+  } catch { return ''; }
+}
+
+// ── Cloudflare Worker：直接抓 Genius 歌詞（支援中文）──
+async function fetchLyricsFromWorker(geniusUrl) {
+  try {
+    const res = await fetch(`${WORKER_URL}?url=${encodeURIComponent(geniusUrl)}`);
+    if (!res.ok) return '';
+    const data = await res.json();
+    return data.lyrics || '';
+  } catch { return ''; }
+}
+
+async function fetchLyricsFromLrclib(title, artist) {
+  try {
+    const res = await fetch(
+      `https://lrclib.net/api/search?track_name=${encodeURIComponent(title)}&artist_name=${encodeURIComponent(artist)}`
+    );
+    if (!res.ok) return '';
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return '';
+    const s = data[0];
+    return s.plainLyrics || s.syncedLyrics?.replace(/\[\d+:\d+\.\d+\]/g, '').trim() || '';
+  } catch { return ''; }
+}
+
+async function fetchLyricsFromOvh(title, artist) {
+  try {
+    const r = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+    const d = await r.json();
+    return d.lyrics || '';
+  } catch { return ''; }
+}
+
+// 繁體轉簡體（只用於搜尋網易雲，Worker 負責轉回繁體）
+function toSimplified(text) {
+  if (!text) return text;
+  // 常用繁→簡對照（僅用於搜尋關鍵字）
+  const map = {'體':'体','語':'语','詞':'词','臺':'台','灣':'湾','學':'学','國':'国','來':'来','說':'说','會':'会','時':'时','對':'对','愛':'爱','樂':'乐','這':'这','個':'个','為':'为','從':'从','與':'与','發':'发','無':'无','萬':'万','東':'东','點':'点','裡':'里','還':'还','後':'后','們':'们','親':'亲','過':'过','進':'进','馬':'马','頭':'头','讓':'让','電':'电','門':'门','問':'问','開':'开','現':'现','書':'书','車':'车','長':'长','機':'机','場':'场','風':'风','飛':'飞','號':'号','熱':'热','漢':'汉','聽':'听','邊':'边','傳':'传','歲':'岁'};
+  return text.split('').map(c => map[c] || c).join('');
+}
+
+function toTraditional(text) { return text; } // Worker 已處理轉換
+
+function detectLanguage(text) {
+  if (!text) return '';
+  const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+  const jp  = (text.match(/[\u3040-\u30ff]/g) || []).length;
+  const total = text.replace(/\s/g, '').length;
+  if (total === 0) return '';
+  if (cjk / total > 0.2) return '中文';
+  if (jp / total > 0.1) return '日文';
+  return '英文';
 }
 
 function displayResult(info) {
-  songTitle.textContent = info.title || '未知歌曲';
+  songTitle.textContent = toTraditional(info.title) || '未知歌曲';
   songMeta.textContent = [
-    info.artist && `🎤 ${info.artist}`,
+    info.artist && `🎤 ${toTraditional(info.artist)}`,
+    info.album && `💿 ${toTraditional(info.album)}`,
     info.year && `📅 ${info.year}`,
     info.language && `🌐 ${info.language}`,
   ].filter(Boolean).join('   ·   ');
+
+  // 封面圖（Genius 提供）
+  const existingCover = document.getElementById('songCover');
+  if (existingCover) existingCover.remove();
+  if (info.coverUrl) {
+    const img = document.createElement('img');
+    img.id = 'songCover';
+    img.src = info.coverUrl;
+    img.alt = 'cover';
+    img.style.cssText = 'width:64px;height:64px;border-radius:8px;object-fit:cover;flex-shrink:0;';
+    const header = document.querySelector('.song-header');
+    header.insertBefore(img, header.firstChild);
+  }
 
   songTag.textContent = info.language || 'LYRICS';
 
